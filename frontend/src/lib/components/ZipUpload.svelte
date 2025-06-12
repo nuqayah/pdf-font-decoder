@@ -1,45 +1,43 @@
 <script lang="ts">
   import {
     Package,
-    UploadCloud,
     CheckCircle,
     AlertCircle,
     FileArchive,
   } from "@lucide/svelte";
-  import { Button } from "$lib/components/ui/button";
+
   import {
     Card,
-    CardContent,
-    CardHeader,
     CardTitle,
+    CardHeader,
+    CardContent,
   } from "$lib/components/ui/card";
+
+  import { apiClient } from "$lib/api";
   import { Badge } from "$lib/components/ui/badge";
+  import { Button } from "$lib/components/ui/button";
   import { Progress } from "$lib/components/ui/progress";
   import { Separator } from "$lib/components/ui/separator";
-  import { apiClient } from "$lib/api";
   import type { ZipUploadResponse, UploadProgress } from "$lib/types";
 
   let { onZipProcessed } = $props<{
     onZipProcessed: (data: ZipUploadResponse) => void;
   }>();
 
-  let fileInput = $state<HTMLInputElement>();
   let dragOver = $state(false);
   let isUploading = $state(false);
-  let uploadedFile = $state<File | null>(null);
   let error = $state<string | null>(null);
-  let uploadResult = $state<ZipUploadResponse | null>(null);
+  let fileInput = $state<HTMLInputElement>();
+  let uploadedFile = $state<File | null>(null);
   let uploadProgress = $state<UploadProgress | null>(null);
+  let uploadResult = $state<ZipUploadResponse | null>(null);
   let progressInterval = $state<NodeJS.Timeout | null>(null);
 
   function handleFileSelect(event: Event) {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
-    if (file && file.name.endsWith(".zip")) {
-      processZipFile(file);
-    } else if (file) {
-      error = "Please select a ZIP file";
-    }
+    if (file && file.name.endsWith(".zip")) processZipFile(file);
+    else if (file) error = "Please select a ZIP file";
   }
 
   function handleDrop(event: DragEvent) {
@@ -47,11 +45,8 @@
     dragOver = false;
 
     const file = event.dataTransfer?.files[0];
-    if (file && file.name.endsWith(".zip")) {
-      processZipFile(file);
-    } else if (file) {
-      error = "Please drop a ZIP file";
-    }
+    if (file && file.name.endsWith(".zip")) processZipFile(file);
+    else if (file) error = "Please drop a ZIP file";
   }
 
   function handleDragOver(event: DragEvent) {
@@ -125,9 +120,8 @@
           stopProgressPolling();
           isUploading = false;
 
-          if (progress.error) {
-            error = progress.error;
-          } else if (progress.result) {
+          if (progress.error) error = progress.error;
+          else if (progress.result) {
             uploadResult = {
               message: "ZIP processing completed",
               task_id: taskId,
@@ -340,6 +334,7 @@
           </div>
         {/if}
 
+        <!-- Error Display -->
         {#if error}
           <div
             class="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800"
@@ -351,6 +346,7 @@
           </div>
         {/if}
 
+        <!-- Actions -->
         <div class="flex justify-between">
           <Button
             variant="outline"

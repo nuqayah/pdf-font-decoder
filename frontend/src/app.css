@@ -118,4 +118,31 @@
   body {
     @apply bg-background text-foreground;
   }
+  .font-fallback {
+    font-family: "Times New Roman", "Georgia", serif !important;
+  }
+
+  .font-fallback text {
+    font-family: "Times New Roman", "Georgia", serif !important;
+  }
+
+  /* Suppress font loading console errors */
+  @font-face {
+    font-family: "fallback-font";
+    src: url("data:font/woff2;base64,") format("woff2");
+    font-display: fallback;
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  #app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 }

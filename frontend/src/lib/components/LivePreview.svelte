@@ -3,19 +3,19 @@
   import type { Font } from "$lib/types";
 
   let {
-    svgFileId,
     fonts,
+    svgFileId,
     refreshTrigger = 0,
   } = $props<{
-    svgFileId: number | null;
     fonts: Font[];
+    svgFileId: number | null;
     refreshTrigger?: number;
   }>();
 
   let isLoading = $state(false);
   let liveContent = $state<string>("");
-  let originalContent = $state<string>("");
   let error = $state<string | null>(null);
+  let originalContent = $state<string>("");
 
   async function loadOriginalSvg() {
     if (!svgFileId) {

@@ -1,19 +1,21 @@
 <script lang="ts">
   import { apiClient } from "$lib/api";
-  import type { Font, ZipUploadResponse } from "$lib/types";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { Progress } from "$lib/components/ui/progress";
-  import FileUpload from "$lib/components/FileUpload.svelte";
   import ZipUpload from "$lib/components/ZipUpload.svelte";
-  import SVGSelector from "$lib/components/SVGSelector.svelte";
+  import type { Font, ZipUploadResponse } from "$lib/types";
+  import FileUpload from "$lib/components/FileUpload.svelte";
   import { Card, CardContent } from "$lib/components/ui/card";
+  import SVGSelector from "$lib/components/SVGSelector.svelte";
+
   import {
     Tabs,
-    TabsContent,
     TabsList,
+    TabsContent,
     TabsTrigger,
   } from "$lib/components/ui/tabs";
+
   import GlyphEditor from "$lib/components/GlyphEditor.svelte";
   import LivePreview from "$lib/components/LivePreview.svelte";
   import SourceOfTruth from "$lib/components/SourceOfTruth.svelte";
@@ -23,8 +25,8 @@
   let requiredFonts = $state<string[]>([]);
   let uploadedSvg = $state<File | null>(null);
   let uploadedFonts = $state<Record<string, File>>({});
-  let currentStep = $state<"upload" | "svg-selection" | "mapping">("upload");
   let uploadMode = $state<"individual" | "zip">("individual");
+  let currentStep = $state<"upload" | "svg-selection" | "mapping">("upload");
 
   let isLoading = $state(false);
   let serverFonts = $state<Font[]>([]);
@@ -61,9 +63,9 @@
         return;
       }
 
-      if (fontFiles.length > 0) {
+      if (fontFiles.length > 0)
         await apiClient.uploadFonts(svgFileId, fontFiles);
-      }
+
       const fontsResponse = await apiClient.getFonts(svgFileId);
       serverFonts = fontsResponse.fonts;
       currentStep = "mapping";
@@ -79,9 +81,7 @@
     if (data.processed_svgs?.length === 1) {
       const svg = data.processed_svgs[0];
       handleSvgSelected(svg.svg_file_id, svg.filename);
-    } else {
-      currentStep = "svg-selection";
-    }
+    } else currentStep = "svg-selection";
   }
 
   async function handleSvgSelected(
@@ -224,6 +224,38 @@
       <div class="h-full overflow-y-auto p-8">
         <div class="max-w-4xl mx-auto">
           <SVGSelector onSvgSelected={handleSvgSelected} />
+
+          {#if isLoading}
+            <Card class="mt-6">
+              <CardContent class="text-center py-8">
+                <div class="inline-flex items-center gap-2 text-primary">
+                  <div
+                    class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+                  ></div>
+                  <span class="text-sm font-medium">Loading fonts...</span>
+                </div>
+              </CardContent>
+            </Card>
+          {/if}
+
+          {#if error}
+            <Card
+              class="mt-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20"
+            >
+              <CardContent class="py-4">
+                <div
+                  class="flex items-center gap-2 text-red-700 dark:text-red-300"
+                >
+                  <div
+                    class="w-4 h-4 rounded-full bg-red-600 flex items-center justify-center"
+                  >
+                    <span class="text-white text-xs">!</span>
+                  </div>
+                  <span class="text-sm font-medium">{error}</span>
+                </div>
+              </CardContent>
+            </Card>
+          {/if}
         </div>
       </div>
     {:else if currentStep === "mapping"}
@@ -317,9 +349,9 @@
           </Button>
         {/if}
         {#if currentStep === "upload" && uploadMode === "zip"}
-          <Button variant="ghost" size="sm" onclick={resetToUpload}
-            >Reset</Button
-          >
+          <Button variant="ghost" size="sm" onclick={resetToUpload}>
+            Reset
+          </Button>
         {/if}
         <div>Ready to analyze your fonts</div>
       </div>

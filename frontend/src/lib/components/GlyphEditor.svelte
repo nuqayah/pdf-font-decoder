@@ -1,19 +1,19 @@
 <script lang="ts">
+  import { apiClient } from "$lib/api";
+  import type { Font, Glyph } from "$lib/types";
   import { Input } from "$lib/components/ui/input";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
-  import { apiClient } from "$lib/api";
-  import type { Font, Glyph } from "$lib/types";
 
   let {
     fonts,
     svgFileId,
-    mappingProgress = $bindable(),
     onMappingChanged,
+    mappingProgress = $bindable(),
   } = $props<{
     fonts: Font[];
-    svgFileId: number | null;
     mappingProgress: number;
+    svgFileId: number | null;
     onMappingChanged: () => void;
   }>();
 
@@ -31,9 +31,7 @@
     fonts.forEach((font: Font) => {
       font.glyphs.forEach((glyph: Glyph) => {
         totalGlyphs++;
-        if (glyph.mapping && glyph.mapping.trim()) {
-          mappedGlyphs++;
-        }
+        if (glyph.mapping && glyph.mapping.trim()) mappedGlyphs++;
       });
     });
 
