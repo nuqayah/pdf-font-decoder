@@ -73,7 +73,7 @@ if [ $count -ge $retries ]; then
 fi
 
 echo "Starting frontend development server..."
-cd frontend || exit
+cd ../frontend || exit
 if [ ! -d "node_modules" ]; then
     echo "Installing frontend dependencies..."
     pnpm install

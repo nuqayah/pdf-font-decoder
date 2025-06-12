@@ -1,8 +1,7 @@
 from datetime import datetime
-from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DateTime
-
-Base = declarative_base()
+from sqlalchemy.orm import relationship
+from .database import Base
 
 class SVGFile(Base):
     __tablename__ = "svg_files"
@@ -40,4 +39,4 @@ class Glyph(Base):
     mapping = Column(String, default="")
     is_mapped = Column(Boolean, default=False)
 
-    font_file = relationship("FontFile", back_populates="glyphs")
+    font_file = relationship("FontFile", back_populates="glyphs") 
