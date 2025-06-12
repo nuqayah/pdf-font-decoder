@@ -38,6 +38,7 @@ backend/
 
 ```
 frontend/
+├── .env                     # Environment configuration
 ├── src/
 │   ├── App.svelte           # Main application component
 │   ├── lib/
@@ -117,6 +118,18 @@ frontend/
 - Node.js v18+
 - Python 3.9+
 - pnpm (or npm)
+
+### Environment Configuration
+
+The frontend requires an environment file to configure the API endpoint:
+
+**frontend/.env:**
+
+```
+VITE_API_URL=http://localhost:8000
+```
+
+This file configures the frontend to communicate with the backend API server. Make sure the URL matches your backend server configuration.
 
 ### Installation & Startup
 
