@@ -1,19 +1,20 @@
 <script lang="ts">
   import {
-    UploadCloud,
+    X,
     FileText,
     CheckCircle,
     AlertCircle,
-    X,
+    UploadCloud,
   } from "@lucide/svelte";
-  import { Button } from "$lib/components/ui/button";
+
   import {
     Card,
-    CardContent,
-    CardHeader,
     CardTitle,
+    CardHeader,
+    CardContent,
   } from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
+  import { Button } from "$lib/components/ui/button";
   import { Progress } from "$lib/components/ui/progress";
   import { Separator } from "$lib/components/ui/separator";
 
@@ -42,7 +43,6 @@
       : 0
   );
 
-  // Drag and drop handling
   function handleSvgSelect(event: Event) {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
@@ -111,7 +111,6 @@
     }
   }
 
-  // File processing with validation
   async function processFile(file: File) {
     uploadedFile = file;
     requiredFonts = [];
@@ -154,7 +153,6 @@
     uploadedFonts = {};
   }
 
-  // Progress tracking and user feedback
   $effect(() => {
     if (uploadProgress === 100 && requiredFonts.length > 0) {
       setTimeout(() => {
@@ -165,7 +163,6 @@
 </script>
 
 <div class="space-y-6">
-  <!-- SVG Upload Section -->
   <Card class="relative">
     <CardHeader>
       <CardTitle class="flex items-center gap-2">
@@ -235,7 +232,6 @@
   {#if uploadedFile && requiredFonts.length > 0}
     <Separator />
 
-    <!-- Font Upload Section -->
     <Card class="relative">
       <CardHeader>
         <div class="flex items-center justify-between">
@@ -253,7 +249,6 @@
         </p>
       </CardHeader>
       <CardContent class="space-y-4">
-        <!-- Progress -->
         <div class="space-y-2">
           <div class="flex items-center justify-between text-sm">
             <span class="font-medium">
@@ -267,7 +262,6 @@
           <Progress value={uploadProgress} />
         </div>
 
-        <!-- Bulk Upload Area -->
         {#if uploadProgress < 100}
           <div
             class="border-2 border-dashed transition-all duration-200 cursor-pointer rounded-lg {dragOver &&
@@ -297,7 +291,6 @@
           </div>
         {/if}
 
-        <!-- Required Fonts List -->
         <div class="space-y-3">
           <h4 class="text-sm font-medium text-foreground">Required Fonts:</h4>
           <div class="grid gap-2">
@@ -343,7 +336,6 @@
           oninput={handleFontSelect}
         />
 
-        <!-- Instructions -->
         <div
           class="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg"
         >
@@ -388,7 +380,6 @@
   {/if}
 
   {#if uploadedFile && requiredFonts.length === 0}
-    <!-- No fonts required -->
     <Card>
       <CardContent class="text-center py-8">
         <CheckCircle class="w-12 h-12 mx-auto mb-4 text-green-500" />
