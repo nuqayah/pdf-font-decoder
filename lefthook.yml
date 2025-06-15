@@ -36,6 +36,9 @@ pre-commit:
           fi
         done
 
+    check-eof-newline:
+      run: '! rg -q -U -l "[^\n]\z" {staged_files}'
+
     check-merge-conflicts:
       run: |
         files=$(git diff --cached --name-only)
