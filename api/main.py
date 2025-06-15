@@ -31,9 +31,9 @@ if settings.ALLOWED_HOSTS:
         allow_headers=['*'],
     )
 
-app.include_router(svg.router)
-app.include_router(fonts.router)
-app.include_router(glyphs.router)
+app.include_router(svg.router, prefix='/api')
+app.include_router(fonts.router, prefix='/api')
+app.include_router(glyphs.router, prefix='/api')
 
 
 @app.get('/')
