@@ -95,7 +95,7 @@ class APIClient {
   }
 
   getFontFileUrl(fontId: number): string {
-    return `${this.baseUrl}/font-file/${fontId}`;
+    return `${this.baseUrl}/api/font-file/${fontId}`;
   }
 }
 

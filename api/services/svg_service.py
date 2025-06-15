@@ -64,7 +64,7 @@ class SVGService:
 
             if font_file:
                 # Replace with an absolute URL to the backend's font-serving endpoint
-                absolute_url = f'{base_url}/font-file/{font_file.id}'
+                absolute_url = f'{base_url}/api/font-file/{font_file.id}'
                 return f'url("{absolute_url}")'
 
             # If no match is found, leave the original URL unchanged
