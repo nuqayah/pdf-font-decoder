@@ -1,62 +1,74 @@
 // ESLint configuration for SVG Font Analyzer
 import js from '@eslint/js';
+import ts from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 import eslintPluginImportX from 'eslint-plugin-import-x';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
+import svelteParser from 'svelte-eslint-parser';
 import tseslint from 'typescript-eslint';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   js.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...svelte.configs['flat/recommended'],
-  {
-    ignores: [
-      'node_modules/**/*',
-      'dist/**/*',
-      '.venv/**/*',
-      'uploads/**/*',
-      '*.db',
-      '*.db-journal',
-    ],
-  },
   {
     files: ['**/*.js', '**/*.ts'],
     languageOptions: {
-      globals: { ...globals.es2021, ...globals.browser },
-      parser: tseslint.parser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      parser: tsParser,
       parserOptions: {
-        ecmaVersion: 'latest',
+        ecmaVersion: 2022,
         sourceType: 'module',
       },
     },
-  },
-  {
-    files: ['vite.config.js', 'vite.config.ts', 'eslint.config.js'],
-    languageOptions: {
-      globals: { ...globals.es2021, ...globals.node },
+    plugins: {
+      '@typescript-eslint': ts,
+    },
+    rules: {
+      ...ts.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-unused-vars': 'off',
     },
   },
   {
     files: ['**/*.svelte'],
     languageOptions: {
-      globals: { ...globals.es2021, ...globals.browser },
+      globals: {
+        ...globals.browser,
+      },
+      parser: svelteParser,
       parserOptions: {
-        parser: tseslint.parser,
+        parser: tsParser,
+        extraFileExtensions: ['.svelte'],
       },
     },
-    rules: {
-      'no-inner-declarations': 'off',
-      'no-self-assign': 'off',
-      'svelte/no-at-html-tags': 'off',
-      'svelte/require-each-key': 'off',
-      'svelte/valid-compile': ['error', { ignoreWarnings: true }],
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
+    plugins: {
+      svelte,
+      '@typescript-eslint': ts,
     },
+    rules: {
+      ...svelte.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': 'off',
+      'svelte/no-at-html-tags': 'off',
+    },
+  },
+  {
+    ignores: [
+      'build/',
+      '.svelte-kit/',
+      'dist/',
+      'node_modules/',
+      '.venv/',
+      'uploads/',
+      '*.db',
+      '*.db-journal',
+    ],
   },
   {
     plugins: {

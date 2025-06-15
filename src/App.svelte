@@ -1,19 +1,17 @@
 <script lang="ts">
   import { apiClient } from '$lib/api';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Button } from '$lib/components/ui/button';
-  import { Progress } from '$lib/components/ui/progress';
-  import ZipUpload from '$lib/components/ZipUpload.svelte';
-  import type { Font, ZipUploadResponse } from '$lib/types';
   import FileUpload from '$lib/components/FileUpload.svelte';
-  import { Card, CardContent } from '$lib/components/ui/card';
-  import SVGSelector from '$lib/components/SVGSelector.svelte';
-
-  import { Tabs, TabsList, TabsContent, TabsTrigger } from '$lib/components/ui/tabs';
-
   import GlyphEditor from '$lib/components/GlyphEditor.svelte';
   import LivePreview from '$lib/components/LivePreview.svelte';
   import SourceOfTruth from '$lib/components/SourceOfTruth.svelte';
+  import SVGSelector from '$lib/components/SVGSelector.svelte';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Button } from '$lib/components/ui/button';
+  import { Card, CardContent } from '$lib/components/ui/card';
+  import { Progress } from '$lib/components/ui/progress';
+  import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+  import ZipUpload from '$lib/components/ZipUpload.svelte';
+  import type { Font, ZipUploadResponse } from '$lib/types';
 
   let mappingProgress = $state(0);
   let livePreviewRefresh = $state(0);
