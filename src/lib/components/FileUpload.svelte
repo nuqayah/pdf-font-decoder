@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { X, FileText, CheckCircle, AlertCircle, UploadCloud } from '@lucide/svelte';
+  import { AlertCircle, CheckCircle, FileText, UploadCloud, X } from '@lucide/svelte';
 
-  import { Card, CardTitle, CardHeader, CardContent } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Progress } from '$lib/components/ui/progress';
   import { Separator } from '$lib/components/ui/separator';
 
@@ -311,7 +311,7 @@
           class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20"
         >
           <div class="flex items-start gap-3">
-            <AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
             <div class="text-sm">
               <p class="mb-1 font-medium text-blue-800 dark:text-blue-200">Upload Tips:</p>
               <ul class="space-y-1 text-blue-700 dark:text-blue-300">

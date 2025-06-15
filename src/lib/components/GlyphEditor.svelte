@@ -1,9 +1,9 @@
 <script lang="ts">
   import { apiClient } from '$lib/api';
-  import type { Font, Glyph } from '$lib/types';
-  import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import type { Font, Glyph } from '$lib/types';
 
   let {
     fonts,
@@ -161,7 +161,7 @@
               <div
                 class="hover:bg-muted/30 group flex items-center gap-2 rounded-sm px-1 py-1.5 transition-colors"
               >
-                <div class="size-10 flex-shrink-0">
+                <div class="size-10 shrink-0">
                   {#if glyph.preview_image}
                     <img
                       src={glyph.preview_image}
@@ -189,7 +189,7 @@
                   {/if}
                 </div>
 
-                <div class="w-16 flex-shrink-0">
+                <div class="w-16 shrink-0">
                   <div class="text-foreground truncate font-mono text-xs" title={glyph.codepoint}>
                     {glyph.codepoint.length > 8
                       ? glyph.codepoint.substring(0, 7) + '…'
@@ -212,7 +212,7 @@
                   />
                 </div>
 
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                   {#if glyph.is_mapped}
                     <Badge
                       variant="default"
