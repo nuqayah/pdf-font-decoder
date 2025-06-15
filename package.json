@@ -22,7 +22,7 @@
     "@types/node": "^24.0.1",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "bits-ui": "^2.6.0",
+    "bits-ui": "^2.8.0",
     "clsx": "^2.1.1",
     "eslint": "^9.27.0",
     "eslint-plugin-import-x": "^4.13.3",
@@ -43,9 +43,12 @@
     "typescript-eslint": "^8.34.0",
     "vite": "^6.3.5"
   },
-  "browserslist": [
-    "last 40 chrome version",
-    "last 35 firefox version",
-    "last 15 safari version"
-  ]
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild",
+      "lefthook",
+      "svelte-preprocesses"
+    ]
+  }
 }
