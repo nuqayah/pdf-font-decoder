@@ -12,7 +12,10 @@ dependencies = [
     "python-multipart",
     "pillow",
     "fonttools",
-    "granian"
+    "granian",
+    "pydantic-settings",
+    "orjson",
+    "rich"
 ]
 
 [tool.uv]

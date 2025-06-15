@@ -4,33 +4,33 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent))
 
 from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from database.database import engine
+from config import settings
 from database.models import Base
+from database.database import engine
 from routers import svg, fonts, glyphs
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title='SVG Font Analyzer API', version='1.0.0')
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        'http://localhost:5020',
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://127.0.0.1:5020',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:5174',
-    ],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    description='API for PDF Font Analysis',
+    version='1.0.0',
+    debug=settings.IS_DEBUG,
+    default_response_class=ORJSONResponse,
 )
 
-# Include routers
+if settings.ALLOWED_HOSTS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.ALLOWED_HOSTS],
+        allow_credentials=True,
+        allow_methods=['GET', 'POST'],
+        allow_headers=['*'],
+    )
+
 app.include_router(svg.router)
 app.include_router(fonts.router)
 app.include_router(glyphs.router)
@@ -38,4 +38,13 @@ app.include_router(glyphs.router)
 
 @app.get('/')
 async def root():
-    return {'message': 'SVG Font Analyzer API'}
+    """Root endpoint providing basic information about the API"""
+    return {
+        'message': 'PDF Font Analyzer API',
+        'version': '1.0.0',
+        'features': [
+            'PDF font upload and analysis',
+            'Glyph extraction',
+            'Font metadata retrieval',
+        ],
+    }
