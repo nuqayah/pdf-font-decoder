@@ -1,0 +1,67 @@
+pre-commit:
+  commands:
+    eslint:
+      glob: "*.{js,ts}"
+      run: pnpm exec eslint --fix {staged_files} && git add {staged_files}
+    prettier:
+      glob: "*.{js,ts,svelte,html,css}"
+      run: "pnpm exec prettier --write {staged_files} && git add {staged_files}"
+
+    check-large-files:
+      run: |
+        files=$(git diff --cached --name-only)
+        if [ -n "$files" ]; then
+          echo "$files" | xargs -I {} sh -c 'if [ -f "{}" ]; then ls -l "{}"; fi' | awk '{if ($5 > 500000) print $9 " is " $5 " bytes (>500KB)"}'
+        fi
+
+    check-python:
+      glob: "*.py"
+      run: |
+        for file in {staged_files}; do
+          if [ -f "$file" ]; then
+            uv run -m ast "$file" > /dev/null 2>&1 || exit 1
+          fi
+        done
+
+    check-json:
+      glob: "*.json"
+      run: |
+        for file in {staged_files}; do
+          # Skip TypeScript config files as they can contain comments
+          if [[ "$file" == tsconfig*.json ]]; then
+            continue
+          fi
+          if [ -f "$file" ]; then
+            jq . "$file" >/dev/null || exit 1
+          fi
+        done
+
+    check-merge-conflicts:
+      run: |
+        files=$(git diff --cached --name-only)
+        if [ -n "$files" ]; then
+          echo "$files" | xargs -I {} sh -c 'if [ -f "{}" ]; then grep -l "^<<<<<<< HEAD" "{}"; fi' | head -1 | grep -q . && exit 1 || exit 0
+        fi
+
+    lint:
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+
+    fmt:
+      glob: "*.py"
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+
+post-merge:
+  parallel: true
+  commands:
+    install-client-deps:
+      files: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD
+      glob: "package.json"
+      run: pnpm install
+
+    install-server-deps:
+      files: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD
+      glob: "uv.lock"
+      run: uv sync --inexact

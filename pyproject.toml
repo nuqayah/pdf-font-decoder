@@ -1,0 +1,58 @@
+[project]
+name = "svg-font-analyzer"
+version = "0.1.0"
+description = "A tool to analyze SVG fonts."
+authors = [{ name = "Ahmed Osama Al-Sawah", email = "ahmedosamaalsawah@gmail.com" }]
+requires-python = ">=3.12"
+readme = "README.md"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "python-multipart",
+    "pillow",
+    "fonttools",
+    "granian"
+]
+
+[tool.uv]
+package = false
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ipython>=9.3.0",
+    "rich>=14.0.0",
+    "ruff>=0.11.12",
+]
+
+[tool.ruff]
+fix = true
+line-length = 120
+src = ["src"]
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = [
+    "ERA001", # Found commented-out code
+    "G004", # Logging statement uses f-string
+    "E731", # Do not assign a lambda expression, use a def
+    "E712" # If comparsion to true and false, sqlalchemy
+]
+extend-select = ["TID"]
+
+[tool.ruff.format]
+quote-style = "single"
+line-ending = "lf"
+
+[project.optional-dependencies]
+dev = [
+    "uv",
+    "ruff"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["api"]

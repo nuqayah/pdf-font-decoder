@@ -1,0 +1,10 @@
+[Service]
+User=web
+WorkingDirectory=/srv/apps/svg-font-analyzer
+ExecStart=mise run api
+Restart=on-failure
+RestartSec=5s
+StandardError=append:/var/log/svg-font-analyzer-error.log
+
+[Install]
+WantedBy=multi-user.target
