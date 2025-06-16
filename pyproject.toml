@@ -1,5 +1,5 @@
 [project]
-name = "svg-font-analyzer"
+name = "pdf-font-decoder"
 version = "0.1.0"
 description = "A tool to analyze SVG fonts."
 authors = [{ name = "Ahmed Osama Al-Sawah", email = "ahmedosamaalsawah@gmail.com" }]

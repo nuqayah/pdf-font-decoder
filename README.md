@@ -1,4 +1,4 @@
-# SVG Font Analyzer
+# PDF Font Decoder
 
 A web application for analyzing SVG files with obfuscated fonts and mapping glyphs to readable characters. Upload SVG files along with their font files, then interactively map each glyph to its corresponding character for decoding obfuscated text.
 
@@ -136,7 +136,7 @@ This file configures the frontend to communicate with the backend API server. Ma
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd svg-font-analyzer
+cd pdf-font-decoder
 
 # Start both frontend and backend
 ./start.sh

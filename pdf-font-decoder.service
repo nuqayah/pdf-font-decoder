@@ -1,10 +1,10 @@
 [Service]
 User=web
-WorkingDirectory=/srv/apps/svg-font-analyzer
+WorkingDirectory=/srv/apps/pdf-font-decoder
 ExecStart=mise run api
 Restart=on-failure
 RestartSec=5s
-StandardError=append:/var/log/svg-font-analyzer-error.log
+StandardError=append:/var/log/pdf-font-decoder-error.log
 
 [Install]
 WantedBy=multi-user.target
