@@ -131,9 +131,11 @@
         {#if bulkMappingMode}
             <div
                 class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+                onclick={closeBulkMode}
             >
                 <div
                     class="bg-background border-border max-h-[80vh] max-w-lg min-w-96 overflow-auto rounded-lg border p-6"
+                    onclick={e => e.stopPropagation()}
                 >
                     <div class="mb-4 flex items-center justify-between">
                         <div class="text-lg font-semibold">Bulk Fill Unmapped Glyphs</div>
@@ -193,13 +195,17 @@
 
                     <div class="border-border mt-6 flex items-center justify-between border-t pt-4">
                         <Button variant="outline" onclick={closeBulkMode}>Cancel</Button>
-                        <Button
-                            variant="default"
-                            onclick={applyAllBulkMappings}
-                            disabled={!Object.values(bulkMappingValues).some(val => val?.trim())}
-                        >
-                            Apply All
-                        </Button>
+                        {#if fonts.length > 1}
+                            <Button
+                                variant="default"
+                                onclick={applyAllBulkMappings}
+                                disabled={!Object.values(bulkMappingValues).some(val =>
+                                    val?.trim(),
+                                )}
+                            >
+                                Apply All
+                            </Button>
+                        {/if}
                     </div>
                 </div>
             </div>
