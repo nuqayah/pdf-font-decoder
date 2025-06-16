@@ -1,10 +1,20 @@
 import {svelte} from '@sveltejs/vite-plugin-svelte'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
-import {defineConfig} from 'vite'
 
-// https://vite.dev/config/
-export default defineConfig({
+/** @type {import('vite').UserConfig}*/
+export default {
+    build: {
+        rollupOptions: {
+            output: {
+                entryFileNames: `assets/[name].js`,
+                chunkFileNames: `assets/[name].js`,
+                assetFileNames: `assets/[name].[ext]`,
+                inlineDynamicImports: true,
+            },
+        },
+        sourcemap: true,
+    },
     plugins: [svelte(), tailwindcss()],
     resolve: {
         alias: {
@@ -19,4 +29,4 @@ export default defineConfig({
             },
         },
     },
-})
+}
