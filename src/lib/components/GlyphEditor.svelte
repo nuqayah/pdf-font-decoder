@@ -1,31 +1,25 @@
 <div class="h-full overflow-auto">
     {#if fonts.length === 0}
-        <div class="text-muted-foreground flex h-64 items-center justify-center">
-            <div class="text-center">
-                <div class="mb-2 text-lg font-medium">No fonts loaded</div>
-                <div class="text-sm">Upload fonts to start mapping glyphs</div>
-            </div>
+        <div class="text-muted-foreground flex h-64 items-center justify-center text-center">
+            <p class="mb-2 text-lg font-medium">No fonts loaded</p>
+            <p class="text-sm">Upload fonts to start mapping glyphs</p>
         </div>
     {:else}
         <div
-            class="bg-background/95 border-border/50 sticky top-0 mb-4 border-b p-3 backdrop-blur-sm"
+            class="bg-background/95 border-border/50 sticky top-0 mb-4 flex items-center justify-between border-b p-3 backdrop-blur-sm"
         >
-            <div class="flex items-center justify-between">
-                <div class="text-muted-foreground text-sm">
-                    {getMappedGlyphsCount()} of {getTotalGlyphsCount()} glyphs mapped across
-                    {fonts.length} fonts
-                </div>
-                <div class="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        class="h-7 text-xs"
-                        onclick={() => (bulkMappingMode = true)}
-                    >
-                        Bulk Fill
-                    </Button>
-                </div>
+            <div class="text-muted-foreground text-sm">
+                {getMappedGlyphsCount()} of {getTotalGlyphsCount()} glyphs mapped across
+                {fonts.length} fonts
             </div>
+            <Button
+                variant="outline"
+                size="sm"
+                class="h-7 text-xs"
+                onclick={() => (bulkMappingMode = true)}
+            >
+                Bulk Fill
+            </Button>
         </div>
 
         <div class="space-y-6 px-1">
@@ -35,10 +29,10 @@
                         class="border-border/50 flex items-center justify-between border-b px-1 py-2"
                     >
                         <div class="flex items-center gap-2">
-                            <div class="text-foreground text-sm font-semibold">
+                            <p class="text-foreground text-sm font-semibold">
                                 {font.font_name}
-                            </div>
-                            <div class="text-muted-foreground text-xs">{font.filename}</div>
+                            </p>
+                            <p class="text-muted-foreground text-xs">{font.filename}</p>
                         </div>
                         <Badge variant="outline" class="h-5 text-xs">
                             {font.glyphs.filter((glyph: Glyph) => glyph.is_mapped).length} / {font
@@ -131,14 +125,20 @@
         {#if bulkMappingMode}
             <div
                 class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
-                onclick={closeBulkMode}
+                onclick={handleBackdropClick}
+                onkeydown={handleBackdropKeydown}
+                role="presentation"
             >
                 <div
                     class="bg-background border-border max-h-[80vh] max-w-lg min-w-96 overflow-auto rounded-lg border p-6"
-                    onclick={e => e.stopPropagation()}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="bulk-fill-title"
                 >
                     <div class="mb-4 flex items-center justify-between">
-                        <div class="text-lg font-semibold">Bulk Fill Unmapped Glyphs</div>
+                        <div class="text-lg font-semibold" id="bulk-fill-title">
+                            Bulk Fill Unmapped Glyphs
+                        </div>
                         <Button variant="ghost" size="sm" onclick={closeBulkMode}>✕</Button>
                     </div>
 
@@ -236,6 +236,20 @@ let bulkMappingMode = $state(false)
 let bulkMappingValues = $state<Record<number, string>>({})
 
 $effect(() => {
+    const handleWindowKeyDown = (e: KeyboardEvent) => {
+        if (bulkMappingMode && e.key === 'Escape') {
+            closeBulkMode()
+        }
+    }
+
+    window.addEventListener('keydown', handleWindowKeyDown)
+
+    return () => {
+        window.removeEventListener('keydown', handleWindowKeyDown)
+    }
+})
+
+$effect(() => {
     calculateProgress()
 })
 
@@ -288,6 +302,18 @@ async function applyAllBulkMappings() {
 function closeBulkMode() {
     bulkMappingMode = false
     bulkMappingValues = {}
+}
+
+function handleBackdropClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+        closeBulkMode()
+    }
+}
+
+function handleBackdropKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+        closeBulkMode()
+    }
 }
 
 function handleKeydown(event: KeyboardEvent, currentIndex: number, fontGlyphs: Glyph[]) {
