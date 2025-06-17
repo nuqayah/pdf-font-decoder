@@ -13,6 +13,7 @@ dependencies = [
     "pillow",
     "fonttools",
     "granian",
+    "openai",
     "pydantic-settings",
     "orjson",
     "rich"

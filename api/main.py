@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from database.models import Base
 from database.database import engine
-from routers import svg, fonts, glyphs
+from routers import svg, fonts, glyphs, ai_mapping
 
 Base.metadata.create_all(bind=engine)
 
@@ -34,6 +34,7 @@ if settings.ALLOWED_HOSTS:
 app.include_router(svg.router, prefix='/api')
 app.include_router(fonts.router, prefix='/api')
 app.include_router(glyphs.router, prefix='/api')
+app.include_router(ai_mapping.router, prefix='/api')
 
 
 @app.get('/')

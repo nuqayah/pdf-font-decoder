@@ -1,10 +1,14 @@
-import base64
+import os
 import uuid
+import openai
+import base64
 import shutil
+import tempfile
+from io import BytesIO
 from pathlib import Path
-from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from database.models import FontFile, Glyph
+from typing import List, Dict, Any, Optional
 
 try:
     from fontTools.ttLib import TTFont
@@ -13,7 +17,13 @@ try:
 except ImportError:
     FONTTOOLS_AVAILABLE = False
 
-# Upload directory setup
+try:
+    from PIL import Image, ImageDraw, ImageFont
+
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+
 UPLOAD_DIR = Path('uploads')
 UPLOAD_DIR.mkdir(exist_ok=True)
 (UPLOAD_DIR / 'fonts').mkdir(exist_ok=True)
@@ -92,6 +102,77 @@ class FontService:
             traceback.print_exc()
 
     @staticmethod
+    def generate_png_for_glyph(glyph: Glyph, font_path: str) -> Optional[str]:
+        """Generate PNG preview for a single glyph. Returns base64 PNG or None if failed."""
+
+        if not PIL_AVAILABLE:
+            print('Warning: PIL not available, cannot generate PNG')
+            return None
+
+        if not glyph.codepoint.startswith('U+'):
+            return None
+
+        try:
+            unicode_val = int(glyph.codepoint[2:], 16)
+            character = chr(unicode_val)
+        except (ValueError, OverflowError):
+            return None
+
+        temp_font_path = None
+        working_font_path = font_path
+
+        if font_path.lower().endswith(('.woff', '.woff2')):
+            temp_font_path = FontService._convert_woff_to_ttf(font_path)
+            if not temp_font_path:
+                return None
+            working_font_path = temp_font_path
+
+        try:
+            img = Image.new('RGB', (128, 128), 'white')
+            draw = ImageDraw.Draw(img)
+
+            try:
+                font = ImageFont.truetype(working_font_path, 48)
+            except Exception:
+                font = ImageFont.load_default()
+
+            bbox = draw.textbbox((0, 0), character, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+
+            x = (128 - text_width) // 2 - bbox[0]
+            y = (128 - text_height) // 2 - bbox[1]
+
+            draw.text((x, y), character, font=font, fill='black')
+
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            png_data = base64.b64encode(buffer.getvalue()).decode()
+            return f'data:image/png;base64,{png_data}'
+
+        except Exception:
+            return None
+        finally:
+            if temp_font_path and os.path.exists(temp_font_path):
+                os.unlink(temp_font_path)
+
+    @staticmethod
+    def _convert_woff_to_ttf(woff_path: str) -> Optional[str]:
+        """Convert WOFF to temporary TTF file. Returns path or None if failed."""
+        if not FONTTOOLS_AVAILABLE:
+            return None
+
+        try:
+            temp_fd, temp_path = tempfile.mkstemp(suffix='.ttf')
+            os.close(temp_fd)
+
+            font = TTFont(woff_path)
+            font.save(temp_path)
+            return temp_path
+        except Exception:
+            return None
+
+    @staticmethod
     def match_fonts_to_svg(required_fonts: List[str], available_fonts: List[Path]) -> List[Path]:
         """Match required fonts to available font files"""
         matched_fonts = []
@@ -118,14 +199,11 @@ class FontService:
         file_id = str(uuid.uuid4())
         file_path = UPLOAD_DIR / 'fonts' / f'{file_id}_{filename}'
 
-        # Save file to disk
         with open(file_path, 'wb') as f:
             f.write(file_content)
 
-        # Extract font name
         font_name = Path(filename).stem
 
-        # Store font in database
         db_font = FontFile(
             svg_file_id=svg_file_id,
             font_name=font_name,
@@ -135,7 +213,6 @@ class FontService:
         db.add(db_font)
         db.commit()
 
-        # Process glyphs
         FontService.generate_glyphs_from_font(db, db_font.id, str(file_path))
 
         return {'font_id': db_font.id, 'font_name': font_name, 'filename': filename}
@@ -143,17 +220,14 @@ class FontService:
     @staticmethod
     def process_font_from_zip(font_file: Path, svg_file_id: int, db: Session) -> Dict[str, Any]:
         """Process font file from ZIP extraction"""
-        # Create unique file path for font
+
         font_file_id = str(uuid.uuid4())
         final_font_path = UPLOAD_DIR / 'fonts' / f'{font_file_id}_{font_file.name}'
 
-        # Copy font to final location
         shutil.copy(font_file, final_font_path)
 
-        # Extract font name
         font_name = font_file.stem
 
-        # Store font in database
         db_font = FontFile(
             svg_file_id=svg_file_id,
             font_name=font_name,
@@ -163,7 +237,50 @@ class FontService:
         db.add(db_font)
         db.commit()
 
-        # Process glyphs
         FontService.generate_glyphs_from_font(db, db_font.id, str(final_font_path))
 
         return {'font_id': db_font.id, 'font_name': font_name, 'filename': font_file.name}
+
+    @staticmethod
+    def get_ai_suggestion_for_png(png_base64: str) -> Optional[str]:
+        """Send PNG to GPT-4V and get character prediction. Returns character or None."""
+
+        if not png_base64 or not png_base64.startswith('data:image/png;base64,'):
+            return None
+
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            print('Warning: OPENAI_API_KEY not found')
+            return None
+
+        try:
+            client = openai.OpenAI(api_key=api_key)
+
+            response = client.chat.completions.create(
+                model='gpt-4o',
+                messages=[
+                    {
+                        'role': 'user',
+                        'content': [
+                            {
+                                'type': 'text',
+                                'text': 'What single character is shown in this image? Reply with only the character, no explanation.',
+                            },
+                            {'type': 'image_url', 'image_url': {'url': png_base64}},
+                        ],
+                    }
+                ],
+                max_tokens=10,
+                temperature=0,
+            )
+
+            ai_response = response.choices[0].message.content.strip()
+
+            if ai_response:
+                return ai_response[0]
+
+            return None
+
+        except Exception as e:
+            print(f'AI suggestion failed: {e}')
+            return None
