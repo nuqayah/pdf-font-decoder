@@ -24,6 +24,7 @@
 
         <div class="space-y-6 px-1">
             {#each fonts as font}
+                {@const unmappedCount = getUnmappedGlyphsForFont(font)}
                 <div class="space-y-1">
                     <div
                         class="border-border/50 flex items-center justify-between border-b px-1 py-2"
@@ -34,10 +35,54 @@
                             </p>
                             <p class="text-muted-foreground text-xs">{font.filename}</p>
                         </div>
-                        <Badge variant="outline" class="h-5 text-xs">
-                            {font.glyphs.filter((glyph: Glyph) => glyph.is_mapped).length} / {font
-                                .glyphs.length}
-                        </Badge>
+                        <div class="flex items-center gap-2">
+                            {#if unmappedCount > 0}
+                                <div class="flex flex-col items-end gap-1">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="h-7 text-xs"
+                                        onclick={() => generateSuggestions(font)}
+                                        disabled={aiGenerationState[font.font_id]?.loading}
+                                    >
+                                        {#if aiGenerationState[font.font_id]?.loading}
+                                            <svg
+                                                class="mr-1 h-4 w-4 animate-spin"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    class="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    stroke-width="4"
+                                                ></circle>
+                                                <path
+                                                    class="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                            <span>Generating...</span>
+                                        {:else}
+                                            <span>Suggest with AI</span>
+                                        {/if}
+                                    </Button>
+                                    {#if aiGenerationState[font.font_id]?.error}
+                                        <p class="text-destructive text-right text-xs">
+                                            {aiGenerationState[font.font_id].error}
+                                        </p>
+                                    {/if}
+                                </div>
+                            {/if}
+                            <Badge variant="outline" class="h-5 text-xs">
+                                {font.glyphs.filter((glyph: Glyph) => glyph.is_mapped).length} / {font
+                                    .glyphs.length}
+                            </Badge>
+                        </div>
                     </div>
 
                     <div class="space-y-0.5">
@@ -232,10 +277,10 @@
 
 <script lang="ts">
 import {apiClient} from '$lib/api'
-import {Badge} from '$lib/components/ui/badge'
-import {Button} from '$lib/components/ui/button'
-import {Input} from '$lib/components/ui/input'
 import type {Font, Glyph} from '$lib/types'
+import {Badge} from '$lib/components/ui/badge'
+import {Input} from '$lib/components/ui/input'
+import {Button} from '$lib/components/ui/button'
 
 let {
     fonts,
@@ -251,6 +296,7 @@ let {
 
 let bulkMappingMode = $state(false)
 let bulkMappingValues = $state<Record<number, string>>({})
+let aiGenerationState = $state<Record<number, {loading: boolean; error: string | null}>>({})
 
 $effect(() => {
     const handleWindowKeyDown = (e: KeyboardEvent) => {
@@ -322,15 +368,11 @@ function closeBulkMode() {
 }
 
 function handleBackdropClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
-        closeBulkMode()
-    }
+    if (event.target === event.currentTarget) closeBulkMode()
 }
 
 function handleBackdropKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-        closeBulkMode()
-    }
+    if (event.key === 'Escape') closeBulkMode()
 }
 
 function handleKeydown(event: KeyboardEvent, currentIndex: number, fontGlyphs: Glyph[]) {
@@ -360,13 +402,36 @@ function getTotalGlyphsCount() {
 }
 
 function getMappedGlyphsCount() {
-    return fonts.reduce(
-        (total: number, font: Font) => total + font.glyphs.filter((g: Glyph) => g.is_mapped).length,
-        0,
-    )
+    return fonts.reduce((total: number, font: Font) => {
+        return total + font.glyphs.filter((glyph: Glyph) => glyph.is_mapped).length
+    }, 0)
 }
 
 function getUnmappedGlyphsForFont(font: Font) {
-    return font.glyphs.filter(g => !g.is_mapped).length
+    return font.glyphs.filter((g: Glyph) => !g.is_mapped).length
+}
+
+async function generateSuggestions(font: Font) {
+    aiGenerationState[font.font_id] = {loading: true, error: null}
+
+    try {
+        const result = await apiClient.generateAISuggestions(font.font_id)
+        console.log(`AI suggestions generated for font ${font.font_name}:`, result)
+
+        if (svgFileId) {
+            const response = await apiClient.getFonts(svgFileId)
+            const updatedFont = response.fonts.find((f: Font) => f.font_id === font.font_id)
+            if (updatedFont) {
+                Object.assign(font, updatedFont)
+                calculateProgress()
+            }
+        }
+
+        onMappingChanged()
+        aiGenerationState[font.font_id] = {loading: false, error: null}
+    } catch (err) {
+        console.error(`Error generating AI suggestions for font ${font.font_name}:`, err)
+        aiGenerationState[font.font_id] = {loading: false, error: 'Failed to generate suggestions.'}
+    }
 }
 </script>

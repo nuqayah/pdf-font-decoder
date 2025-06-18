@@ -11,18 +11,14 @@
                     </div>
                 </div>
             {:else if error}
-                <div class="flex h-48 items-center justify-center">
-                    <div class="text-center text-red-600">
-                        <p class="font-medium">Error Loading Live Preview</p>
-                        <p class="mt-1 text-sm">{error}</p>
-                    </div>
+                <div class="flex h-48 items-center justify-center text-center text-red-600">
+                    <p class="font-medium">Error Loading Live Preview</p>
+                    <p class="mt-1 text-sm">{error}</p>
                 </div>
             {:else if !liveContent}
-                <div class="flex h-48 items-center justify-center">
-                    <div class="text-center text-gray-500">
-                        <p class="font-medium">📖 Live Preview (Decoded)</p>
-                        <p class="mt-1 text-sm">Upload SVG to see live decoded preview</p>
-                    </div>
+                <div class="flex h-48 items-center justify-center text-center text-gray-500">
+                    <p class="font-medium">📖 Live Preview (Decoded)</p>
+                    <p class="mt-1 text-sm">Upload SVG to see live decoded preview</p>
                 </div>
             {:else}
                 {@html liveContent}
@@ -33,7 +29,7 @@
 
 <script lang="ts">
 import {apiClient} from '$lib/api'
-import type {Font} from '$lib/types'
+import type {Font, Glyph} from '$lib/types'
 
 let {
     fonts,
@@ -77,23 +73,85 @@ function processLivePreview() {
         return
     }
 
-    let processedContent = originalContent
+    try {
+        // Parse SVG as DOM
+        const parser = new DOMParser()
+        const svgDoc = parser.parseFromString(originalContent, 'image/svg+xml')
 
-    for (const font of fonts) {
-        for (const glyph of font.glyphs) {
-            if (glyph.mapping && glyph.mapping.trim() && glyph.codepoint.startsWith('U+')) {
-                try {
-                    const unicode_val = parseInt(glyph.codepoint.replace('U+', ''), 16)
-                    const encoded_char = String.fromCharCode(unicode_val)
-                    processedContent = processedContent.replaceAll(encoded_char, glyph.mapping)
-                } catch {
-                    continue
-                }
-            }
-        }
+        // Extract CSS font mappings
+        const fontMappings = extractFontMappings(svgDoc)
+
+        // Apply font-specific character replacements
+        applyFontSpecificMappings(svgDoc, fontMappings)
+
+        // Convert back to string
+        const serializer = new XMLSerializer()
+        liveContent = serializer.serializeToString(svgDoc)
+    } catch (error) {
+        console.error('Error processing live preview:', error)
+        liveContent = originalContent // Fallback to original
     }
+}
 
-    liveContent = processedContent
+function extractFontMappings(svgDoc: Document) {
+    const fontMappings: Record<string, string> = {}
+
+    const styleElements = svgDoc.querySelectorAll('style')
+
+    styleElements.forEach(styleEl => {
+        const cssText = styleEl.textContent
+
+        const cssRules = cssText?.match(/\.([^{]+)\s*\{([^}]+)\}/g)
+
+        if (cssRules) {
+            cssRules.forEach(rule => {
+                const classMatch = rule.match(/\.([^{]+)\s*\{/)
+                const fontMatch = rule.match(/font-family:\s*([^;]+);/)
+
+                if (classMatch && fontMatch) {
+                    const className = classMatch[1].trim()
+                    const fontFamily = fontMatch[1].trim()
+                    fontMappings[className] = fontFamily
+                }
+            })
+        }
+    })
+
+    return fontMappings
+}
+
+function applyFontSpecificMappings(svgDoc: Document, fontMappings: Record<string, string>) {
+    const textElements = svgDoc.querySelectorAll('text')
+
+    textElements.forEach(textEl => {
+        const className = textEl.getAttribute('class')
+        if (!className) return
+
+        const fontFamily = fontMappings[className]
+        if (!fontFamily) return
+
+        const matchingFont = fonts.find(
+            (font: Font) =>
+                font.font_name === fontFamily ||
+                font.filename.includes(fontFamily) ||
+                fontFamily.includes(font.font_name),
+        )
+
+        if (!matchingFont) return
+
+        let textContent = textEl.textContent || ''
+
+        matchingFont.glyphs.forEach((glyph: Glyph) => {
+            if (glyph.mapping && glyph.mapping.trim() && glyph.codepoint.startsWith('U+')) {
+                const unicode_val = parseInt(glyph.codepoint.replace('U+', ''), 16)
+                const encoded_char = String.fromCharCode(unicode_val)
+
+                textContent = textContent.replaceAll(encoded_char, glyph.mapping)
+            }
+        })
+
+        textEl.textContent = textContent
+    })
 }
 
 $effect(() => {

@@ -34,7 +34,7 @@ class FontService:
     def generate_glyphs_from_font(db: Session, font_file_id: int, font_path: str):
         """Extract glyphs from a font file and store them in the database"""
         if not FONTTOOLS_AVAILABLE:
-            print(f'Warning: fonttools not available, skipping glyph extraction for font {font_path}')
+            # print(f'Warning: fonttools not available, skipping glyph extraction for font {font_path}')
             return
 
         try:
@@ -46,7 +46,7 @@ class FontService:
             glyph_set = font.getGlyphSet()
             all_glyph_names = list(glyph_set.keys())
 
-            print(f'Processing font with {len(all_glyph_names)} total glyphs ({len(cmap)} Unicode-mapped)')
+            # print(f'Processing font with {len(all_glyph_names)} total glyphs ({len(cmap)} Unicode-mapped)')
 
             glyph_count = 0
 
@@ -95,13 +95,13 @@ class FontService:
                 db.add(glyph)
                 glyph_count += 1
 
-            print(f'Extracted {glyph_count} glyphs from font (excluding .notdef)')
+            # print(f'Extracted {glyph_count} glyphs from font (excluding .notdef)')
 
             font.close()
             db.commit()
 
         except Exception as e:
-            print(f'Error processing font {font_path}: {e}')
+            # print(f'Error processing font {font_path}: {e}')
             import traceback
 
             traceback.print_exc()
@@ -111,7 +111,6 @@ class FontService:
         """Generate PNG preview for a single glyph. Returns base64 PNG or None if failed."""
 
         if not PIL_AVAILABLE:
-            print('Warning: PIL not available, cannot generate PNG')
             return None
 
         if not glyph.codepoint.startswith('U+'):
@@ -237,7 +236,7 @@ class FontService:
             svg_file_id=svg_file_id,
             font_name=font_name,
             filename=font_file.name,
-            upload_path=str(final_font_path),
+            upload_path=str(final_font_path),   
         )
         db.add(db_font)
         db.commit()
@@ -248,14 +247,18 @@ class FontService:
 
     @staticmethod
     def get_ai_suggestion_for_png(png_base64: str) -> Optional[str]:
-        """Send PNG to GPT-4V and get character prediction. Returns character or None."""
-
-        if not png_base64 or not png_base64.startswith('data:image/png;base64,'):
+        """Send existing rendered preview PNG to GPT-4V and get character prediction. Returns character or None."""
+        
+        if not png_base64:
+            return None
+            
+        if not png_base64.startswith('data:image/png;base64,'):
+            # print(f'Warning: Invalid PNG format - does not start with data:image/png;base64,')
             return None
 
         api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
-            print('Warning: OPENAI_API_KEY not found')
+            # print('Warning: OPENAI_API_KEY not found')
             return None
 
         try:
@@ -269,23 +272,39 @@ class FontService:
                         'content': [
                             {
                                 'type': 'text',
-                                'text': 'What single character is shown in this image? Reply with only the character, no explanation.',
+                                'text': 'What single character is shown in this image? Reply with only the character, no explanation.'
                             },
-                            {'type': 'image_url', 'image_url': {'url': png_base64}},
-                        ],
+                            {
+                                'type': 'image_url',
+                                'image_url': {'url': png_base64}
+                            }
+                        ]
                     }
                 ],
-                max_tokens=10,
-                temperature=0,
+                max_tokens=5,
+                temperature=0
             )
 
-            ai_response = response.choices[0].message.content.strip()
-
-            if ai_response:
-                return ai_response[0]
-
+            ai_response = response.choices[0].message.content
+            
+            if not ai_response:
+                return None
+                
+            cleaned_response = ai_response.strip()
+            
+            if cleaned_response.startswith('"') and cleaned_response.endswith('"'):
+                cleaned_response = cleaned_response[1:-1]
+            
+            if cleaned_response.startswith("'") and cleaned_response.endswith("'"):
+                cleaned_response = cleaned_response[1:-1]
+                
+            cleaned_response = cleaned_response.strip()
+            
+            if cleaned_response:
+                return cleaned_response[0]
+            
             return None
 
         except Exception as e:
-            print(f'AI suggestion failed: {e}')
+            # print(f'AI suggestion failed: {e}')
             return None
