@@ -63,6 +63,7 @@ GRANIAN_RELOAD_IGNORE_PATHS = 'src public'
 GRANIAN_PORT = 8030
 GRANIAN_WORKERS = 1
 OPENAI_API_KEY=''
+GEMINI_API_KEY=''
 
 [settings]
 python.uv_venv_auto = true 

@@ -9,11 +9,11 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "sqlalchemy",
+    "google-genai",
     "python-multipart",
     "pillow",
     "fonttools",
     "granian",
-    "openai",
     "pydantic-settings",
     "orjson",
     "rich"

@@ -1,6 +1,5 @@
 import os
 import uuid
-import openai
 import base64
 import shutil
 import tempfile
@@ -244,53 +243,49 @@ class FontService:
         FontService.generate_glyphs_from_font(db, db_font.id, str(final_font_path))
 
         return {'font_id': db_font.id, 'font_name': font_name, 'filename': font_file.name}
-
+    
     @staticmethod
     def get_ai_suggestion_for_png(png_base64: str) -> Optional[str]:
-        """Send existing rendered preview PNG to GPT-4V and get character prediction. Returns character or None."""
+        """Send existing rendered preview PNG to Google Gemini and get character prediction. Returns character or None."""
         
+        # Input validation
         if not png_base64:
             return None
             
         if not png_base64.startswith('data:image/png;base64,'):
-            # print(f'Warning: Invalid PNG format - does not start with data:image/png;base64,')
+            print(f'Warning: Invalid PNG format - does not start with data:image/png;base64,')
             return None
 
-        api_key = os.getenv('OPENAI_API_KEY')
+        # Check for API key
+        api_key = os.getenv('GEMINI_API_KEY')
         if not api_key:
-            # print('Warning: OPENAI_API_KEY not found')
+            print('Warning: GEMINI_API_KEY not found')
             return None
 
         try:
-            client = openai.OpenAI(api_key=api_key)
+            from google import genai
+            from PIL import Image
+            import io
+            
+            client = genai.Client(api_key=api_key)
 
-            response = client.chat.completions.create(
-                model='gpt-4o-mini',
-                messages=[
-                    {
-                        'role': 'user',
-                        'content': [
-                            {
-                                'type': 'text',
-                                'text': 'What single character is shown in this image? Reply with only the character, no explanation.'
-                            },
-                            {
-                                'type': 'image_url',
-                                'image_url': {'url': png_base64}
-                            }
-                        ]
-                    }
-                ],
-                max_tokens=5,
-                temperature=0
+            
+            image_data = png_base64.split(',')[1]
+            image_bytes = base64.b64decode(image_data)
+            image = Image.open(io.BytesIO(image_bytes)) 
+            
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=[
+                    "What single character is shown in this image? Reply with only the character, no explanation.",
+                    image
+                ]
             )
 
-            ai_response = response.choices[0].message.content
-            
-            if not ai_response:
+            if not response.text:
                 return None
                 
-            cleaned_response = ai_response.strip()
+            cleaned_response = response.text.strip()
             
             if cleaned_response.startswith('"') and cleaned_response.endswith('"'):
                 cleaned_response = cleaned_response[1:-1]
@@ -305,6 +300,9 @@ class FontService:
             
             return None
 
+        except ImportError:
+            print('Warning: google-generativeai library not installed. Run: pip install google-generativeai')
+            return None
         except Exception as e:
-            # print(f'AI suggestion failed: {e}')
+            print(f'Gemini AI suggestion failed: {e}')
             return None
