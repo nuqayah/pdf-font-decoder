@@ -1,8 +1,8 @@
-from pathlib import Path
 from typing import List
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
+from pathlib import Path
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, selectinload
+from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
 
 from database.session import get_db
 from database.models import FontFile, SVGFile
@@ -71,6 +71,7 @@ async def get_fonts(svg_file_id: int, db: Session = Depends(get_db)):
                         'glyph_id': glyph.id,
                         'codepoint': glyph.codepoint,
                         'preview_image': glyph.preview_image,
+                        'rendered_preview': glyph.rendered_preview,
                         'mapping': glyph.mapping,
                         'is_mapped': glyph.is_mapped,
                     }

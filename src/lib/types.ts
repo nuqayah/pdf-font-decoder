@@ -66,10 +66,11 @@ export interface SVGListResponse {
 
 export interface Glyph {
     glyph_id: number
-    codepoint: string
-    preview_image: string
     mapping: string
+    codepoint: string
     is_mapped: boolean
+    preview_image: string
+    rendered_preview: string | null
 }
 
 export interface Font {

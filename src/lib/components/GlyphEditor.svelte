@@ -45,33 +45,50 @@
                             <div
                                 class="hover:bg-muted/30 group flex items-center gap-2 rounded-sm px-1 py-1.5 transition-colors"
                             >
-                                <div class="size-10 flex-shrink-0">
-                                    {#if glyph.preview_image}
-                                        <img
-                                            src={glyph.preview_image}
-                                            alt={glyph.codepoint}
-                                            class="h-full w-full rounded-sm object-contain"
-                                            onerror={e => {
-                                                const img = e.target as HTMLImageElement
-                                                img.style.display = 'none'
-                                                const fallback =
-                                                    img.nextElementSibling as HTMLElement
-                                                if (fallback) fallback.style.display = 'flex'
-                                            }}
-                                        />
-                                        <div
-                                            class="bg-muted/50 text-muted-foreground flex h-full w-full items-center justify-center rounded-sm font-mono text-[8px]"
-                                            style="display:none"
-                                        >
-                                            ?
-                                        </div>
-                                    {:else}
-                                        <div
-                                            class="bg-muted/50 text-muted-foreground flex h-full w-full items-center justify-center rounded-sm font-mono text-[8px]"
-                                        >
-                                            ?
-                                        </div>
-                                    {/if}
+                                <div class="flex w-20 flex-shrink-0 gap-1">
+                                    <div class="size-10 flex-shrink-0">
+                                        {#if glyph.preview_image}
+                                            <img
+                                                src={glyph.preview_image}
+                                                alt={glyph.codepoint}
+                                                class="h-full w-full rounded-sm object-contain"
+                                                onerror={e => {
+                                                    const img = e.target as HTMLImageElement
+                                                    img.style.display = 'none'
+                                                    const fallback =
+                                                        img.nextElementSibling as HTMLElement
+                                                    if (fallback) fallback.style.display = 'flex'
+                                                }}
+                                            />
+                                            <div
+                                                class="bg-muted/50 text-muted-foreground flex h-full w-full items-center justify-center rounded-sm font-mono text-[8px]"
+                                                style="display:none"
+                                            >
+                                                ?
+                                            </div>
+                                        {:else}
+                                            <div
+                                                class="bg-muted/50 text-muted-foreground flex h-full w-full items-center justify-center rounded-sm font-mono text-[8px]"
+                                            >
+                                                ?
+                                            </div>
+                                        {/if}
+                                    </div>
+                                    <div class="size-10 flex-shrink-0">
+                                        {#if glyph.rendered_preview}
+                                            <img
+                                                src={glyph.rendered_preview}
+                                                alt={`${glyph.codepoint} rendered`}
+                                                class="bg-background h-full w-full rounded-sm object-contain"
+                                            />
+                                        {:else}
+                                            <div
+                                                class="bg-muted/50 text-muted-foreground flex h-full w-full items-center justify-center rounded-sm font-mono text-[8px]"
+                                            >
+                                                -
+                                            </div>
+                                        {/if}
+                                    </div>
                                 </div>
 
                                 <div class="w-16 flex-shrink-0">

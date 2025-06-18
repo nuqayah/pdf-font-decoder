@@ -1,15 +1,14 @@
 from typing import List
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Request
-from sqlalchemy.orm import Session, selectinload
 from datetime import datetime
 from pydantic import BaseModel
+from sqlalchemy.orm import Session, selectinload
+from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Request
 
 from database.session import get_db
-from database.models import SVGFile, FontFile
 from services.svg_service import SVGService
+from database.models import SVGFile, FontFile
 
 
-# Pydantic schemas
 class GlyphOut(BaseModel):
     id: int
     codepoint: str
@@ -43,13 +42,10 @@ async def upload_zip(file: UploadFile = File(...)):
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail='Only ZIP files are allowed')
 
-    # Read the file content
     content = await file.read()
 
-    # Start background processing
     task_id = SVGService.start_zip_processing(content, file.filename)
 
-    # Return immediately with task_id
     return {'message': 'ZIP upload started, processing in background', 'task_id': task_id, 'status': 'processing'}
 
 
@@ -100,10 +96,8 @@ async def get_all_svgs(page: int = 1, limit: int = 50, db: Session = Depends(get
     """Get paginated list of all processed SVG files"""
     offset = (page - 1) * limit
 
-    # Get total count
     total = db.query(SVGFile).count()
 
-    # Get paginated SVG files (most recent first)
     svgs = db.query(SVGFile).order_by(SVGFile.created_at.desc()).offset(offset).limit(limit).all()
 
     svg_list = []

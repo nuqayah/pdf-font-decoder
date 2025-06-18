@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from database.models import Glyph
 from sqlalchemy.orm import Session
 from database.session import get_db
-from database.models import Glyph
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(tags=['Glyphs'])
 

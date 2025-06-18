@@ -1,7 +1,7 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
 from .database import Base
+from datetime import datetime
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DateTime
 
 
 class SVGFile(Base):
@@ -37,6 +37,7 @@ class Glyph(Base):
     font_file_id = Column(Integer, ForeignKey('font_files.id'))
     codepoint = Column(String, index=True)
     preview_image = Column(Text)
+    rendered_preview = Column(Text, nullable=True)
     mapping = Column(String, default='')
     is_mapped = Column(Boolean, default=False)
 

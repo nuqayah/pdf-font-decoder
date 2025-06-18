@@ -5,11 +5,9 @@ from pathlib import Path
 from pydantic import AnyHttpUrl
 from pydantic_settings import BaseSettings
 
-# Environment Configuration
 IS_DEBUG: bool = getenv('IS_DEBUG', '').lower() in ('true', '1')
 LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-# Directory Configuration
 BASE_DIR = Path(__file__).parent
 
 if IS_DEBUG:

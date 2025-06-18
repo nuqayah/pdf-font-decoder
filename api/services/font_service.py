@@ -87,6 +87,11 @@ class FontService:
                     mapping='',
                     is_mapped=False,
                 )
+
+                rendered_preview_b64 = FontService.generate_png_for_glyph(glyph, font_path)
+                if rendered_preview_b64:
+                    glyph.rendered_preview = rendered_preview_b64
+
                 db.add(glyph)
                 glyph_count += 1
 
@@ -257,7 +262,7 @@ class FontService:
             client = openai.OpenAI(api_key=api_key)
 
             response = client.chat.completions.create(
-                model='gpt-4o',
+                model='gpt-4o-mini',
                 messages=[
                     {
                         'role': 'user',
