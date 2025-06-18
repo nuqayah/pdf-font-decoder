@@ -1,0 +1,68 @@
+[hooks]
+postinstall = 'uv sync && pnpm i'
+
+[tools]
+lefthook = 'latest'
+node = '22'
+pnpm = '10'
+python = '3.12'
+uv = 'latest'
+
+[tasks.api]
+run = 'uvicorn api.main:app --port $GRANIAN_PORT'
+
+[tasks.dev-client]
+run = 'pnpm --color run dev'
+
+[tasks.dev]
+alias = 'default'
+description = 'Start client and API'
+depends = ['api', 'dev-client']
+
+[tasks.build_frontend]
+run = 'pnpm i && pnpm build'
+
+[tasks.deploy_setup]
+run = '''
+ssh $DEPLOY_HOST '
+  set -ex
+  mkdir -p /srv/apps/pdf-font-decoder/client
+  cd /srv/apps/pdf-font-decoder
+  cat - > pdf-font-decoder.service
+  echo '[env]' >> .mise.local.toml
+  touch mise.toml
+  mise trust
+  sudo systemctl enable $PWD/pdf-font-decoder.service
+' < pdf-font-decoder.service
+echo 'populate `/srv/apps/pdf-font-decoder/.mise.local.toml` with env vars'
+'''
+
+[tasks.deploy]
+depends = ['build_frontend']
+run = '''
+  scp -C -r dist/index.html $DEPLOY_HOST:/srv/apps/pdf-font-decoder/client/
+
+  git archive HEAD mise.toml uv.lock pyproject.toml api | ssh $DEPLOY_HOST '
+    set -ex
+    cd /srv/apps/pdf-font-decoder/
+    tar -xf -
+    mise x -- uv sync --inexact
+  '
+  ssh $DEPLOY_HOST 'sudo service pdf-font-decoder restart'
+'''
+
+[env]
+VITE_PORT = 5020
+IS_DEBUG = 1
+ALLOWED_HOSTS = '["http://localhost", "http://127.0.0.1", "http://[::1]"]'
+
+
+UVICORN_RELOAD = 1
+GRANIAN_RELOAD = 1
+GRANIAN_RELOAD_IGNORE_PATHS = 'src public'
+GRANIAN_PORT = 8030
+GRANIAN_WORKERS = 1
+OPENAI_API_KEY=''
+
+[settings]
+python.uv_venv_auto = true 
