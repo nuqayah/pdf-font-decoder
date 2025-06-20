@@ -237,6 +237,7 @@ import {Progress} from '$lib/components/ui/progress'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '$lib/components/ui/tabs'
 import ZipUpload from '$lib/components/ZipUpload.svelte'
 import type {Font, ZipUploadResponse} from '$lib/types'
+import {onMount} from 'svelte'
 
 let mappingProgress = $state(0)
 let livePreviewRefresh = $state(0)
@@ -329,4 +330,42 @@ function resetToUpload() {
     error = null
     mappingProgress = 0
 }
+
+// Add functions to save and load state from local storage
+function saveStateToLocalStorage() {
+    const state = {
+        svgFileId,
+        uploadedFonts,
+        mappingProgress,
+        currentStep,
+        uploadMode,
+        currentSvgFilename,
+        serverFonts,
+    }
+    localStorage.setItem('pdfFontDecoderState', JSON.stringify(state))
+}
+
+function loadStateFromLocalStorage() {
+    const state = localStorage.getItem('pdfFontDecoderState')
+    if (state) {
+        const parsedState = JSON.parse(state)
+        svgFileId = parsedState.svgFileId
+        uploadedFonts = parsedState.uploadedFonts
+        mappingProgress = parsedState.mappingProgress
+        currentStep = parsedState.currentStep
+        uploadMode = parsedState.uploadMode
+        currentSvgFilename = parsedState.currentSvgFilename
+        serverFonts = parsedState.serverFonts || []
+    }
+}
+
+// Call loadStateFromLocalStorage on component mount
+onMount(() => {
+    loadStateFromLocalStorage()
+})
+
+// Save state to local storage on every state change
+$effect(() => {
+    saveStateToLocalStorage()
+})
 </script>

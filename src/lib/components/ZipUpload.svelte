@@ -195,7 +195,8 @@
 </Card>
 
 <script lang="ts">
-import type {Timeout} from 'node:timers'
+// import type {Timeout} from 'node:timers'
+type Timeout = ReturnType<typeof setTimeout>
 
 import {AlertCircle, CheckCircle, FileArchive, Package} from '@lucide/svelte'
 

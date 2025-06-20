@@ -36,8 +36,42 @@
                             <p class="text-muted-foreground text-xs">{font.filename}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            {#if unmappedCount > 0}
-                                <div class="flex flex-col items-end gap-1">
+                            <div class="flex items-center gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="h-7 text-xs"
+                                    onclick={() => generatePngPreviews(font)}
+                                    disabled={pngGenerationState[font.font_id]?.loading}
+                                >
+                                    {#if pngGenerationState[font.font_id]?.loading}
+                                        <svg
+                                            class="mr-1 h-4 w-4 animate-spin"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                class="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                stroke-width="4"
+                                            ></circle>
+                                            <path
+                                                class="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
+                                        </svg>
+                                        <span>Generating PNGs...</span>
+                                    {:else}
+                                        <span>Generate PNG Previews</span>
+                                    {/if}
+                                </Button>
+
+                                {#if unmappedCount > 0}
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -71,17 +105,25 @@
                                             <span>Suggest with AI</span>
                                         {/if}
                                     </Button>
-                                    {#if aiGenerationState[font.font_id]?.error}
-                                        <p class="text-destructive text-right text-xs">
-                                            {aiGenerationState[font.font_id].error}
-                                        </p>
-                                    {/if}
-                                </div>
-                            {/if}
-                            <Badge variant="outline" class="h-5 text-xs">
-                                {font.glyphs.filter((glyph: Glyph) => glyph.is_mapped).length} / {font
-                                    .glyphs.length}
-                            </Badge>
+                                {/if}
+                            </div>
+
+                            <div class="flex flex-col items-end gap-1">
+                                {#if pngGenerationState[font.font_id]?.error}
+                                    <p class="text-destructive text-right text-xs">
+                                        {pngGenerationState[font.font_id].error}
+                                    </p>
+                                {/if}
+                                {#if aiGenerationState[font.font_id]?.error}
+                                    <p class="text-destructive text-right text-xs">
+                                        {aiGenerationState[font.font_id].error}
+                                    </p>
+                                {/if}
+                                <Badge variant="outline" class="h-5 text-xs">
+                                    {font.glyphs.filter((glyph: Glyph) => glyph.is_mapped).length} /
+                                    {font.glyphs.length}
+                                </Badge>
+                            </div>
                         </div>
                     </div>
 
@@ -297,6 +339,7 @@ let {
 let bulkMappingMode = $state(false)
 let bulkMappingValues = $state<Record<number, string>>({})
 let aiGenerationState = $state<Record<number, {loading: boolean; error: string | null}>>({})
+let pngGenerationState = $state<Record<number, {loading: boolean; error: string | null}>>({})
 
 $effect(() => {
     const handleWindowKeyDown = (e: KeyboardEvent) => {
@@ -432,6 +475,32 @@ async function generateSuggestions(font: Font) {
     } catch (err) {
         console.error(`Error generating AI suggestions for font ${font.font_name}:`, err)
         aiGenerationState[font.font_id] = {loading: false, error: 'Failed to generate suggestions.'}
+    }
+}
+
+async function generatePngPreviews(font: Font) {
+    pngGenerationState[font.font_id] = {loading: true, error: null}
+
+    try {
+        const result = await apiClient.generatePngPreviews(font.font_id)
+        console.log(`PNG previews generated for font ${font.font_name}:`, result)
+
+        // Refresh font data to get the new PNG previews
+        if (svgFileId) {
+            const response = await apiClient.getFonts(svgFileId)
+            const updatedFont = response.fonts.find((f: Font) => f.font_id === font.font_id)
+            if (updatedFont) {
+                Object.assign(font, updatedFont)
+            }
+        }
+
+        pngGenerationState[font.font_id] = {loading: false, error: null}
+    } catch (err) {
+        console.error(`Error generating PNG previews for font ${font.font_name}:`, err)
+        pngGenerationState[font.font_id] = {
+            loading: false,
+            error: 'Failed to generate PNG previews.',
+        }
     }
 }
 </script>

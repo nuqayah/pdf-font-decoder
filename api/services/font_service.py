@@ -85,11 +85,8 @@ class FontService:
                     preview_image=f'data:image/svg+xml;base64,{preview_b64}',
                     mapping='',
                     is_mapped=False,
+                    rendered_preview=None,  # Will be generated on-demand
                 )
-
-                rendered_preview_b64 = FontService.generate_png_for_glyph(glyph, font_path)
-                if rendered_preview_b64:
-                    glyph.rendered_preview = rendered_preview_b64
 
                 db.add(glyph)
                 glyph_count += 1
@@ -104,6 +101,58 @@ class FontService:
             import traceback
 
             traceback.print_exc()
+
+    @staticmethod
+    def generate_png_previews_for_font(db: Session, font_file_id: int, progress_callback=None) -> Dict[str, Any]:
+        """Generate PNG previews for all glyphs in a font. Returns result summary."""
+        
+        # Get font file info
+        font_file = db.query(FontFile).filter(FontFile.id == font_file_id).first()
+        if not font_file:
+            return {'success': False, 'error': 'Font file not found'}
+        
+        # Get all glyphs for this font that don't have rendered previews
+        glyphs = db.query(Glyph).filter(
+            Glyph.font_file_id == font_file_id,
+            Glyph.rendered_preview.is_(None)
+        ).all()
+        
+        if not glyphs:
+            return {'success': True, 'message': 'All glyphs already have PNG previews', 'processed': 0}
+        
+        font_path = font_file.upload_path
+        processed_count = 0
+        error_count = 0
+        total_glyphs = len(glyphs)
+        
+        for i, glyph in enumerate(glyphs):
+            try:
+                # Generate PNG preview
+                rendered_preview_b64 = FontService.generate_png_for_glyph(glyph, font_path)
+                if rendered_preview_b64:
+                    glyph.rendered_preview = rendered_preview_b64
+                    processed_count += 1
+                else:
+                    error_count += 1
+                    
+                # Update progress if callback provided
+                if progress_callback:
+                    progress = int(((i + 1) / total_glyphs) * 100)
+                    progress_callback(progress, f'Processing glyph {i + 1}/{total_glyphs}')
+                    
+            except Exception as e:
+                error_count += 1
+                print(f'Error generating PNG for glyph {glyph.codepoint}: {e}')
+        
+        # Commit all changes
+        db.commit()
+        
+        return {
+            'success': True,
+            'processed': processed_count,
+            'errors': error_count,
+            'total': total_glyphs
+        }
 
     @staticmethod
     def generate_png_for_glyph(glyph: Glyph, font_path: str) -> Optional[str]:

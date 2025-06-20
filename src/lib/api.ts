@@ -89,6 +89,18 @@ class APIClient {
         return response.json()
     }
 
+    async generatePngPreviews(
+        fontId: number,
+    ): Promise<{processed: number; errors: number; total: number; message: string}> {
+        const response = await fetch(`${this.baseUrl}/fonts/${fontId}/generate-png-previews`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+        })
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+        return response.json()
+    }
+
     async updateGlyphMapping(glyphId: number, mapping: string): Promise<{success: boolean}> {
         const response = await fetch(`${this.baseUrl}/glyph/${glyphId}/mapping`, {
             method: 'PUT',

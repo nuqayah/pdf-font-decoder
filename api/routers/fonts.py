@@ -81,3 +81,26 @@ async def get_fonts(svg_file_id: int, db: Session = Depends(get_db)):
         )
 
     return {'fonts': result}
+
+
+@router.post('/fonts/{font_id}/generate-png-previews')
+async def generate_png_previews(font_id: int, db: Session = Depends(get_db)):
+    """Generate PNG previews for all glyphs in a font"""
+    
+    # Check if font exists
+    font_file = db.query(FontFile).filter(FontFile.id == font_id).first()
+    if not font_file:
+        raise HTTPException(status_code=404, detail='Font file not found')
+    
+    # Generate PNG previews
+    result = FontService.generate_png_previews_for_font(db, font_id)
+    
+    if not result['success']:
+        raise HTTPException(status_code=500, detail=result.get('error', 'Failed to generate PNG previews'))
+    
+    return {
+        'message': f'Generated PNG previews for {result["processed"]} glyphs',
+        'processed': result['processed'],
+        'errors': result['errors'],
+        'total': result['total']
+    }
