@@ -7,9 +7,7 @@ import type {
     ZipUploadResponse,
 } from './types'
 
-// Use relative paths to leverage Vite proxy in development
-// In production, ensure your web server proxies /api to your backend
-const API_BASE_URL = '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 class APIClient {
     private baseUrl: string
